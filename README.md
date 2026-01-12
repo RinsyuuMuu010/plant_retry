@@ -1,2 +1,2 @@
 # plant_retry
-a projection to make  a test about management planting seed by newfish.
+An Attempt at Plant Simulation Management Using C Language
