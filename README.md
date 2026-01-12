@@ -1,2 +1,2 @@
 # plant_retry
-a  project make an easy play game come true
+a projection to make  a test about management planting seed by newfish.
