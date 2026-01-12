@@ -46,10 +46,12 @@ typedef struct {
 // 玩家资产
 typedef struct {
     int coins;              // 金币
-    int water_stock;        // 水资源库存
-    int nutrient_stock;     // 养分库存（肥料）
+    int waters ;        // 水资源库存
+    int nutrients ;     // 养分库存（肥料）
     int day;                // 游戏天数
     int plot_count;         // 地块数量
 } Player;
+
+
 
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
