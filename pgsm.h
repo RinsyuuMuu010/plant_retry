@@ -17,7 +17,6 @@ typedef enum {
     Potato,
     Wheat,
     Daisy,
-    Rose,
 
 }PlantType;
 
