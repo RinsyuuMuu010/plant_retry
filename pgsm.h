@@ -17,6 +17,7 @@ typedef enum {
     Potato,
     Wheat,
     Daisy,
+    None,
 
 }PlantType;
 
@@ -50,6 +51,8 @@ typedef struct {
     int day;                // 游戏天数
     int plot_count;         // 地块数量
 } Player;
+
+int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type);
 
 
 
