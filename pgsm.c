@@ -82,3 +82,5 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
            target_plot->plant.name, seed_price, player->coins);
     return 1;
 }
+//摸了一天鱼
+//不要再摸辣！
