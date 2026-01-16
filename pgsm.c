@@ -45,6 +45,7 @@ void initial_plant(Plant *plant,PlantType type) {
     plant->health = 100;
 }
 
+
 // 种植种子
 int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) {
     // 边界检查
@@ -84,3 +85,33 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
 }
 //摸了一天鱼
 //不要再摸辣！
+
+//浇水
+int water_plant(Player *player,Plot *plots,int plot_idx) {
+    if (plot_idx<0||plot_idx >= player->plot_count) {
+        printf("无效地块！\n");
+        return  0;
+    }
+    Plot *target_plot = &plots[plot_idx];
+
+    //检查地块
+    if (target_plot->is_empty) {
+        printf("没有植物，不需要浇水~\n");
+        return  0;
+    }
+
+    //检查水资源
+    const int Water_use = 5;
+    if (player->waters<Water_use) {
+        printf("水资源不足，需要%d，当前只有%d\n",Water_use,player->waters);
+        return  0;
+    }
+
+    //浇水conduct
+    player->waters -= Water_use;
+    target_plot->soil_water += 20; //增加土壤水分
+    if (target_plot->soil_water > 100)
+        target_plot->soil_water =100;
+    printf("成功给%s浇水，剩余水资源：%d,当前土壤水分：%d\n",target_plot->plant.name,player->waters,target_plot->soil_water);
+    return 1;
+}
