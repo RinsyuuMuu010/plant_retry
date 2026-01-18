@@ -18,5 +18,5 @@ int main(void) {
         plots[i].soil_water = 0;
         plots[i].soil_nutrient = 0;
     }
-
+//啥都没写
 }

@@ -96,7 +96,7 @@ int water_plant(Player *player,Plot *plots,int plot_idx) {
 
     //检查地块
     if (target_plot->is_empty) {
-        printf("没有植物，不需要浇水~\n");
+        printf("没有植物，无需浇水~\n");
         return  0;
     }
 
@@ -143,4 +143,41 @@ int water_plant(Player *player,Plot *plots,int plot_idx) {
                target_plot->plant.name,player->nutrients,target_plot->soil_nutrient);
         return 1;
     }
+}
+
+
+int getsth(Player *player,Plot *plots, int plot_idx) {
+    //checkpoint
+    if (plot_idx<0||plot_idx >= player->plot_count) {
+        printf("无效地块！\n");
+        return  0;
+    }
+    Plot *target_plot = &plots[plot_idx];
+    if (target_plot->is_empty) {
+        printf("该地块没有种植植物，无法收获！\n");
+        return  0;
+    }
+    Plant *plant = &target_plot->plant;
+    if (plant->health <=0) {
+        printf("%s已枯萎,无法获得收益！\n",plant->name);
+        target_plot->is_empty = 1 ;
+        memset(plant,0,sizeof(Plant));
+        return  0;
+    }
+    if (plant->growth_value < 100 && plant->growth_stage < 5) {
+        printf("%s未成熟(当前生长值：%d/100），无法收获！\n",
+               plant->name,plant->growth_value);
+        return  0;
+    }
+    player->coins += plant->sell_price;
+    printf("成功收获，获得%d金币，当前总金币：%d\n",
+        plant->sell_price,player->coins);
+
+    //重制地块
+    target_plot->is_empty = 1;
+    target_plot->planted_days = 0;
+    target_plot->soil_water = 0;
+    target_plot->soil_nutrient = 0;
+    memset(plant,0,sizeof(plant)); //清空植物数据
+    return  1;
 }
