@@ -51,10 +51,18 @@ typedef struct {
     int day;                // 游戏天数
     int plot_count;         // 地块数量
 } Player;
-// 种植
+//初始化
+void initial_plant(Plant *plant,PlantType type);
+//种植
 int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type);
-// 浇水
+//浇水
 int water_plant(Player *player, Plot *plots, int plot_idx);
-
-
+//施肥
+int fer_plant(Player *player, Plot *plots, int plot_idx);
+//收获
+int harvest(Player *player,Plot *plots, int plot_idx);
+//主界面
+void show_main_menu(Player *player, Plot *plots);
+//计时
+void pushtime(Player *player,Plot *plots);
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
