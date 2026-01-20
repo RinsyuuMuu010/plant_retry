@@ -63,5 +63,6 @@ int fer_plant(Player *player, Plot *plots, int plot_idx);
 int harvest(Player *player,Plot *plots, int plot_idx);
 //主界面
 void show_main_menu(Player *player, Plot *plots);
-
+//计时
+void pushtime(Player *player,Plot *plots);
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H

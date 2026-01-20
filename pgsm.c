@@ -3,7 +3,7 @@
 //
 #include "pgsm.h"
 
-const int Seed_prices[]={30,30,20,50}; //价位表
+const int Seed_prices[]={30,30,20,50,0}; //价位表
 void initial_plant(Plant *plant,PlantType type) {
     switch (type) {   //如何设置合理的需求和价位？
         case Carrot: //胡萝卜
@@ -69,7 +69,7 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
         printf("金币不足！需要%d金币，当前只有%d\n", seed_price, player->coins);
         return 0;
     }
-    // 执行种植
+    // 执行种植 这里似乎有bug？
     player->coins -= seed_price; // 扣减金币
     target_plot->is_empty = 0;   // 标记地块非空
     target_plot->planted_days = 0; //标记已生长时间
@@ -200,5 +200,55 @@ printf("=================================================\n");
     printf("请选择操作（输入数字键）：");
     printf("=================================================\n");
 }
-
-
+//计时器
+void pushtime(Player *player,Plot *plots) {
+    player->day++;
+    printf("==========进入第 %d 天==========\n",player->day);
+    //更新地块状态
+    for (int i=0;i<player->plot_count;i++) {
+        Plot *plot = &plots[i];
+        if (plot->is_empty) //跳过空地块
+            continue;
+        Plant *plant = &plot->plant;
+        //每日消耗
+        plot->soil_water -= plant->water_need;
+        plot->soil_nutrient -= plant->nutrient_need;
+        //防止负数
+        if (plot->soil_water<0) {
+            plot->soil_water = 0;
+        }
+        if (plot->soil_nutrient<0) {
+            plot->soil_nutrient = 0;
+        }
+        //判断生长
+        int enough_water = (plot->soil_water>=plant->water_need);
+        int enough_nutri = (plot->soil_nutrient>=plant->nutrient_need);
+        if (enough_nutri && enough_water) {
+            //满足时
+            plant->growth_value += 100 / plant->total_growth_days;
+            if (plant->growth_value >100) {
+                plant->growth_value = 100; //封顶
+            }//debug 每次都打印阶段 此前此处未闭合
+                plant->growth_stage = plant->growth_value / 20;//更新生长阶段
+                printf("地块 %d： %s 正常，生长值+%d（当前为：%d）\n",
+                    i,plant->name,100/plant->total_growth_days,plant->growth_value);
+            //此前的}
+        }
+            else {
+                //不满足时
+                plant->health -= 20;
+                if (plant->health < 0) {
+                    plant->health = 0;
+                }
+                printf("地块 %d： %s 缺水或养分不足，健康值-%d（当前为：%d）\n",
+                    i,plant->name,20,plant->health);
+                //枯萎
+                if (plant->health == 0) {
+                    printf("地块 %d: %s 已枯萎ToT。\n",i,plant->name);
+                    plot->is_empty = 1;
+                    memset(plant,0,sizeof(Plant)); //清空
+                }
+            }
+        }
+    printf("==============================\n");
+}
