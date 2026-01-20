@@ -61,5 +61,7 @@ int water_plant(Player *player, Plot *plots, int plot_idx);
 int fer_plant(Player *player, Plot *plots, int plot_idx);
 //收获
 int harvest(Player *player,Plot *plots, int plot_idx);
+//主界面
+void show_main_menu(Player *player, Plot *plots);
 
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H

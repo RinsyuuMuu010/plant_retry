@@ -83,6 +83,7 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
 }
 //摸了一天鱼
 //不要再摸辣！
+
 //浇水
 int water_plant(Player *player,Plot *plots,int plot_idx) {
     if (plot_idx<0||plot_idx >= player->plot_count) {
@@ -175,3 +176,29 @@ int harvest(Player *player,Plot *plots, int plot_idx) {
             memset(plant,0,sizeof(Plant)); //清空植物数据
             return  1;
         }
+//游戏界面
+void show_detail(Player *player,Plot *plots){
+printf("==========迷你植物花园模拟经营 | 第 %d 天 | ==========\n",player->day);
+printf("=-=-=-=-=-金币:%d | 水资源:%d | 肥料:%d | -=-=-=-=-=\n",player->coins,player->waters,player->nutrients);
+printf(".................................................\n");
+for(int i = 0; i < player->plot_count;i++){
+   if(plots[i].is_empty){
+      printf("地块%d:无植物\n",i);
+                        }
+   else{
+printf("地块 %d:%s | 生长值:%d | 健康值:%d | 水分:%d | 养分:%d\n",
+        i, plots[i].plant.name, plots[i].plant.growth_value,plots[i].plant.health, plots[i].soil_water, plots[i].soil_nutrient);
+       }
+                                          }
+printf(".................................................\n");
+printf("=================================================\n");
+
+//
+    printf("=================================================\n");
+    printf("1. 种植种子  2. 浇水     3. 施肥     4. 收获\n");
+    printf("5. 推进一天  6. 保存游戏  7. 加载游戏  8. 退出\n");
+    printf("请选择操作（输入数字键）：");
+    printf("=================================================\n");
+}
+
+
