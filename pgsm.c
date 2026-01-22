@@ -252,3 +252,18 @@ void pushtime(Player *player,Plot *plots) {
         }
     printf("==============================\n");
 }
+//输入
+int get_plot(Player *player) {
+    int idx;
+    while (1) {
+        printf("请输入0~%d之间的地块",player->plot_count-1);
+        if (scanf("%d",&idx)!=1||idx<0||idx>=player->plot_count) {
+            printf("无效地块,请输入存在的地块");
+            while (getchar() != '\n');
+        }else {
+            break;
+        }
+    }
+    return idx;
+}
+//商店？

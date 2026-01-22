@@ -65,4 +65,6 @@ int harvest(Player *player,Plot *plots, int plot_idx);
 void show_main_menu(Player *player, Plot *plots);
 //计时
 void pushtime(Player *player,Plot *plots);
+//输入
+int get_plot(Player *player);
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
