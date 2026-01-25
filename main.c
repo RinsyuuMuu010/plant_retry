@@ -7,7 +7,7 @@ int main(void) {
         .waters = 50,
         .nutrients = 20,
         .day = 1,
-        .plot_count = 4
+        .plot_count = MPC,
     };
     Plot plots[4];
 

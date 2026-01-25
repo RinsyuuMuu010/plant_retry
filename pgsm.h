@@ -10,6 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+//定价
+#define WP 5    // 每单位水的价格
+#define NP 8 // 每单位肥料的价格
+#define PeP 500 // 扩展1块地块的价格
+#define MPC 4 //地块上限为4
 
 //植物类型
 typedef enum {
@@ -62,9 +67,15 @@ int fer_plant(Player *player, Plot *plots, int plot_idx);
 //收获
 int harvest(Player *player,Plot *plots, int plot_idx);
 //主界面
-void show_main_menu(Player *player, Plot *plots);
+void show_detail(Player *player, Plot *plots);
 //计时
 void pushtime(Player *player,Plot *plots);
 //输入
 int get_plot(Player *player);
+//shop
+void shop_menu(Player *player);
+int buy_seed(Player *player,PlantType plant_type);
+int buy_water(Player *player, int amount);
+int buy_nutrient(Player *player,int amount);
+void shop(Player *player);//功能模块 未实现
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H

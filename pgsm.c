@@ -47,7 +47,7 @@ void initial_plant(Plant *plant,PlantType type) {
 // 种植种子
 int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) {
     // 边界检查
-    if (plot_idx < 0 || plot_idx >= player->plot_count) {
+    if (plot_idx < 0 || plot_idx >= MPC) {
         printf("无效的地块！\n");
         return 0;
     }
@@ -61,7 +61,7 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
 
     // 检查植物类型是否有效
     if (plant_type == None || plant_type >= sizeof(Seed_prices)/sizeof(int)) {
-        printf("不存在的植物\n");
+        printf("不存在的植物。\n");
         return 0;
     }
     int seed_price = Seed_prices[plant_type];
@@ -86,7 +86,7 @@ int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type) 
 
 //浇水
 int water_plant(Player *player,Plot *plots,int plot_idx) {
-    if (plot_idx<0||plot_idx >= player->plot_count) {
+    if (plot_idx<0||plot_idx >= MPC ) {
         printf("无效地块！\n");
         return  0;
     }
@@ -115,7 +115,7 @@ int water_plant(Player *player,Plot *plots,int plot_idx) {
 }
 //施肥
 int fer_plant(Player *player,Plot *plots,int plot_idx) {
-        if (plot_idx<0||plot_idx >= player->plot_count) {
+        if (plot_idx<0||plot_idx >= MPC) {
             printf("无效地块！\n");
             return  0;
         }
@@ -143,7 +143,7 @@ int fer_plant(Player *player,Plot *plots,int plot_idx) {
 //收获
 int harvest(Player *player,Plot *plots, int plot_idx) {
             //checkpoint
-            if (plot_idx<0||plot_idx >= player->plot_count) {
+            if (plot_idx<0||plot_idx >= MPC) {
                 printf("无效地块！\n");
                 return  0;
             }
@@ -256,8 +256,8 @@ void pushtime(Player *player,Plot *plots) {
 int get_plot(Player *player) {
     int idx;
     while (1) {
-        printf("请输入0~%d之间的地块",player->plot_count-1);
-        if (scanf("%d",&idx)!=1||idx<0||idx>=player->plot_count) {
+        printf("请输入0~%d之间的地块",MPC -1);
+        if (scanf("%d",&idx)!=1||idx<0||idx>=MPC) {
             printf("无效地块,请输入存在的地块");
             while (getchar() != '\n');
         }else {
@@ -267,3 +267,70 @@ int get_plot(Player *player) {
     return idx;
 }
 //商店？
+void shop_menu(Player *player) {
+    printf("\n========== 植物花园商店 ==========\n");
+    printf("当前金币：%d\n", player->coins);
+    printf("----------------------------------\n");
+    printf("【种子区】\n");
+    printf("1. 胡萝卜种子 - 30金币\n");
+    printf("2. 土豆种子   - 30金币\n");
+    printf("3. 小麦种子   - 20金币\n");
+    printf("4. 雏菊种子   - 50金币\n");
+    printf("----------------------------------\n");
+    printf("【道具区】\n");
+    printf("5. 水资源     - 5金币/单位\n");
+    printf("6. 肥料       - 8金币/单位\n");
+    printf("----------------------------------\n");
+    printf("7. 退出商店\n"); // 仅保留退出选项
+    printf("==================================\n");
+    printf("请选择购买项（输入数字）：");
+}
+//买种
+int buy_seed(Player *player,PlantType plant_type){
+    if (plant_type< Carrot || plant_type > Daisy ) {
+        printf("非法种子");
+        return  0;
+    }
+    int seed_price = Seed_prices[plant_type];
+    if (player->coins < seed_price ) {
+        printf("金币不足，需要%d金币，当前只有%d\n",seed_price,player->coins);
+        return  0;
+    }
+    player->coins -= seed_price;
+    const char *seed_names[]={"胡萝卜","土豆","小麦","雏菊"};
+    printf("成功购买%s种子，剩余金币：%d\n",seed_names[plant_type],player->coins);
+    return  1;
+}
+//买水
+int buy_water(Player *player,int amount) {
+    if (amount<=0){
+        printf("你买个锤子呢，发你空气？！");
+        return  0;
+    }
+    int total_cost = amount * WP;
+    if (player->coins < total_cost ) {
+        printf("金币不足，需要%d金币，当前只有%d\n，请攒够再来吧~",total_cost,player->coins);
+        return 0;
+    }
+    player->coins -= total_cost;
+    player->waters += amount;
+    printf("成功购买 %d 水资源,剩余金币：%d,当前水资源 %d\n",amount,player->coins,player->waters);
+    return 1;
+}
+//买肥料
+int buy_nutrient(Player *player, int amount) {
+    if (amount<=0){
+    printf("你买个锤子呢，发你空气？！");
+    return  0;
+}
+    int total_cost = amount * NP;
+    if (player->coins < total_cost ) {
+        printf("金币不足，需要%d金币，当前只有%d\n，请攒够再来吧~",total_cost,player->coins);
+        return 0;
+    }
+    player->coins -= total_cost;
+    player->nutrients += amount;
+    printf("成功购买 %d 肥料,剩余金币：%d,当前肥料 %d\n",amount,player->coins,player->nutrients);
+    return 1;
+}
+//商店输入?
