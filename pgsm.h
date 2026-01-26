@@ -15,6 +15,7 @@
 #define NP 8 // 每单位肥料的价格
 #define PeP 500 // 扩展1块地块的价格
 #define MPC 4 //地块上限为4
+#define SL "garden_save.dat"
 
 //植物类型
 typedef enum {
@@ -77,5 +78,7 @@ void shop_menu(Player *player);
 int buy_seed(Player *player,PlantType plant_type);
 int buy_water(Player *player, int amount);
 int buy_nutrient(Player *player,int amount);
-void shop(Player *player);//功能模块 未实现
+void shop(Player *player);//功能模块
+void save_game(Player *player, Plot *plots); //有bug
+int load_game(Player *player, Plot *plots);  //有bug？
 #endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H

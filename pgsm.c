@@ -177,29 +177,28 @@ int harvest(Player *player,Plot *plots, int plot_idx) {
             return  1;
         }
 //游戏界面
-void show_detail(Player *player,Plot *plots){
-printf("==========迷你植物花园模拟经营 | 第 %d 天 | ==========\n",player->day);
-printf("=-=-=-=-=-金币:%d | 水资源:%d | 肥料:%d | -=-=-=-=-=\n",player->coins,player->waters,player->nutrients);
-printf(".................................................\n");
-for(int i = 0; i < player->plot_count;i++){
-   if(plots[i].is_empty){
-      printf("地块%d:无植物\n",i);
-                        }
-   else{
-printf("地块 %d:%s | 生长值:%d | 健康值:%d | 水分:%d | 养分:%d\n",
-        i, plots[i].plant.name, plots[i].plant.growth_value,plots[i].plant.health, plots[i].soil_water, plots[i].soil_nutrient);
-       }
-                                          }
-printf(".................................................\n");
-printf("=================================================\n");
-
-//
+void show_detail(Player *player, Plot *plots) {
+    printf("==========迷你植物花园模拟经营 | 第 %d 天 | ==========\n", player->day);
+    printf("=-=-=-=-=-金币:%d | 水资源:%d | 肥料:%d | -=-=-=-=-=\n",
+           player->coins, player->waters, player->nutrients);
+    printf(".................................................\n");
+    for (int i = 0; i < player->plot_count; i++) {
+        if (plots[i].is_empty) {
+            printf("地块%d: 无植物\n", i);
+        } else {
+            printf("地块 %d: %s | 生长值:%d | 健康值:%d | 水分:%d | 养分:%d\n",
+                   i, plots[i].plant.name, plots[i].plant.growth_value,
+                   plots[i].plant.health, plots[i].soil_water, plots[i].soil_nutrient);
+        }
+    }
+    printf(".................................................\n");
     printf("=================================================\n");
     printf("1. 种植种子  2. 浇水     3. 施肥     4. 收获\n");
-    printf("5. 推进一天  6. 保存游戏  7. 加载游戏  8. 退出\n");
-    printf("请选择操作（输入数字键）：");
+    printf("5. 推进一天  6. 保存游戏  7. 加载游戏  8. 商店  9. 退出\n");
     printf("=================================================\n");
+    printf("请选择操作（输入数字键）：");
 }
+
 //计时器
 void pushtime(Player *player,Plot *plots) {
     player->day++;
@@ -272,7 +271,7 @@ void shop_menu(Player *player) {
     printf("当前金币：%d\n", player->coins);
     printf("----------------------------------\n");
     printf("【种子区】\n");
-    printf("1. 胡萝卜种子 - 30金币\n");
+    printf("1. 胡萝卜种子   - 30金币\n");
     printf("2. 土豆种子   - 30金币\n");
     printf("3. 小麦种子   - 20金币\n");
     printf("4. 雏菊种子   - 50金币\n");
@@ -334,3 +333,95 @@ int buy_nutrient(Player *player, int amount) {
     return 1;
 }
 //商店输入?
+void shop(Player *player) {
+    int choice;
+    while (1) {
+        shop_menu(player);
+        while (scanf("%d", &choice) != 1) {
+            printf("输入无效，请输入数字！\n");
+            while (getchar() != '\n');
+        }
+        while (getchar() != '\n'); // 清空换行符
+
+        switch (choice) {
+            case 1: // 胡萝卜种子
+                buy_seed(player, Carrot);
+                break;
+            case 2: // 土豆种子
+                buy_seed(player, Potato);
+                break;
+            case 3: // 小麦种子
+                buy_seed(player, Wheat);
+                break;
+            case 4: // 雏菊种子
+                buy_seed(player, Daisy);
+                break;
+            case 5: { // 购买水
+                int amount;
+                printf("请输入购买水资源的数量：");
+                while (scanf("%d", &amount) != 1 || amount <= 0) {
+                    printf("无效数量！请输入大于0的数字：");
+                    while (getchar() != '\n');
+                }
+                buy_water(player, amount);
+                break;
+            }
+            case 6: { // 购买肥料
+                int amount;
+                printf("请输入购买肥料的数量：");
+                while (scanf("%d", &amount) != 1 || amount <= 0) {
+                    printf("无效数量！请输入大于0的数字：");
+                    while (getchar() != '\n');
+                }
+                buy_nutrient(player, amount);
+                break;
+            }
+            case 7: // 退出商店
+                printf("退出商店！\n");
+                return;
+            default:
+                printf("无效选择！请重新输入\n");
+        }
+        printf("按任意键继续...");
+        getchar();
+    }
+}
+
+//保存&加载
+// 保存游戏
+void save_game(Player *player, Plot *plots) {
+    FILE *fp = fopen(SL, "wb");
+    if (!fp) {
+        printf("存档失败！无法打开文件\n");
+        return;
+    }
+    // 先保存玩家数据，再保存地块数据
+    fwrite(player, sizeof(Player), 1, fp);
+    fwrite(plots, sizeof(Plot), player->plot_count, fp);
+    fclose(fp);
+    printf("游戏保存成功！\n");
+}
+
+// 加载游戏
+int load_game(Player *player, Plot *plots) {
+    FILE *fp = fopen(SL, "rb");
+    if (!fp) {
+        printf("读档失败！存档文件不存在\n");
+        return 0;
+    }
+    // 读取玩家数据
+    if (fread(player, sizeof(Player), 1, fp) != 1) {
+        fclose(fp);
+        printf("读档失败！玩家数据损坏\n");
+        return 0;
+    }
+    // 读取地块数据
+    if (fread(plots, sizeof(Plot), player->plot_count, fp) != player->plot_count) {
+        fclose(fp);
+        printf("读档失败！地块数据损坏\n");
+        return 0;
+    }
+    fclose(fp);
+    printf("游戏加载成功！\n");
+    return 1;
+}
