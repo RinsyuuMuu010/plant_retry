@@ -178,7 +178,7 @@ int harvest(Player *player,Plot *plots, int plot_idx) {
         }
 //游戏界面
 void show_detail(Player *player, Plot *plots) {
-    printf("==========迷你植物花园模拟经营 | 第 %d 天 | ==========\n", player->day);
+    printf("\n==========迷你植物花园模拟经营 | 第 %d 天 | ==========\n", player->day);
     printf("=-=-=-=-=-金币:%d | 水资源:%d | 肥料:%d | -=-=-=-=-=\n",
            player->coins, player->waters, player->nutrients);
     printf(".................................................\n");
@@ -196,7 +196,7 @@ void show_detail(Player *player, Plot *plots) {
     printf("1. 种植种子  2. 浇水     3. 施肥     4. 收获\n");
     printf("5. 推进一天  6. 保存游戏  7. 加载游戏  8. 商店  9. 退出\n");
     printf("=================================================\n");
-    printf("请选择操作（输入数字键）：");
+    printf("请选择操作（输入数字键）：\n");
 }
 
 //计时器
@@ -255,7 +255,7 @@ void pushtime(Player *player,Plot *plots) {
 int get_plot(Player *player) {
     int idx;
     while (1) {
-        printf("请输入0~%d之间的地块",MPC -1);
+        printf("请输入0~%d之间的地块:",MPC -1);
         if (scanf("%d",&idx)!=1||idx<0||idx>=MPC) {
             printf("无效地块,请输入存在的地块");
             while (getchar() != '\n');
@@ -382,7 +382,7 @@ void shop(Player *player) {
             default:
                 printf("无效选择！请重新输入\n");
         }
-        printf("按任意键继续...");
+        printf("Press any key to continue\n");
         getchar();
     }
 }

@@ -31,10 +31,10 @@ int main(void) {
         switch (choice) {
             case 1: {
                 int plot_idx = get_plot(&player);
-                printf("==========选择植物==========");
-                printf("-->1.萝卜 <------> 2.土豆<--");
-                printf("-->3.小麦 <------> 4.雏菊<--");
-                printf("==========选择植物==========");
+                printf("\n==========选择植物==========\n");
+                printf("-->1.萝卜 <------> 2.土豆<--\n");
+                printf("-->3.小麦 <------> 4.雏菊<--\n");
+                printf("==========选择植物==========\n");
                 int plant_choice;
                 while (scanf("%d",&plant_choice) !=1 ||plant_choice <1 ||plant_choice >4 ) {
                     printf("无效选择！请输入1-4：");
@@ -86,8 +86,9 @@ int main(void) {
                 printf("选择无效，请选择1-9之间的数字！\n");
                 break;
         }
-        printf("Press any key to continue");
-        while (getchar()!='\n');
+        printf("Press any key to continue...\n");
+        while (getchar() != '\n' && getchar() != EOF);
+        getchar();//防止直接进入
                 //写一坨不知道有啥用
         //中文显示有bug
         //?
