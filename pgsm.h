@@ -11,8 +11,8 @@
 #include <string.h>
 #include <time.h>
 //定价
-#define WP 5    // 每单位水的价格
-#define NP 8 // 每单位肥料的价格
+#define WP 1    // 每单位水的价格
+#define NP 5 // 每单位肥料的价格
 #define PeP 500 // 扩展1块地块的价格
 #define MPC 4 //地块上限为4
 #define SL "garden_save.dat"

@@ -4,8 +4,8 @@
 int main(void) {
     Player player = {
         .coins = 1000,
-        .waters = 50,
-        .nutrients = 20,
+        .waters = 1000,
+        .nutrients = 1000,
         .day = 1,
         .plot_count = MPC,
     };
@@ -24,20 +24,21 @@ int main(void) {
     while (1) {
         show_detail(&player,plots);
         while (scanf("%d",&choice) != 1) {
-            printf("输入无效，请输入数字：");
+            printf("\t输入无效，请输入数字：");
             while (getchar()!='\n');
         }
         while (getchar()!='\n');
         switch (choice) {
             case 1: {
                 int plot_idx = get_plot(&player);
-                printf("\n==========选择植物==========\n");
-                printf("-->1.萝卜 <------> 2.土豆<--\n");
-                printf("-->3.小麦 <------> 4.雏菊<--\n");
-                printf("==========选择植物==========\n");
+                printf("\n\t==========选择植物==========\n\t");
+                printf("-->1.萝卜 <------> 2.土豆<--\n\t");
+                printf("-->3.小麦 <------> 4.雏菊<--\n\t");
+                printf("==========选择植物==========\n\t");
+                printf("请选择操作（输入数字键）：");
                 int plant_choice;
                 while (scanf("%d",&plant_choice) !=1 ||plant_choice <1 ||plant_choice >4 ) {
-                    printf("无效选择！请输入1-4：");
+                    printf("\t无效选择！请输入1-4：");
                     while (getchar() != '\n');
                 }
                 plant_seed(&player,plots,plot_idx,plant_choice-1);
@@ -68,9 +69,9 @@ int main(void) {
             }
             case 7: {
                 if (load_game(&player,plots)) {
-                    printf("加载成功!\n");
+                    printf("\t加载成功!\n");
                 }else{
-                    printf("加载失败!\n");
+                    printf("\t加载失败!\n");
                 }
                 break;
             }
@@ -79,14 +80,14 @@ int main(void) {
                 break;
             }
             case 9: { // 退出游戏
-                printf("感谢游玩！再见～\n");
+                printf("\t感谢游玩！再见～\n");
                 return 0;
             }
             default:
-                printf("选择无效，请选择1-9之间的数字！\n");
+                printf("\t选择无效，请选择1-9之间的数字！\n");
                 break;
         }
-        printf("Press any key to continue...\n");
+        printf("\tPress any key to continue...\n");
         while (getchar() != '\n' && getchar() != EOF);
         getchar();//防止直接进入
                 //写一坨不知道有啥用
