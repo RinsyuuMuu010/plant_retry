@@ -1,7 +1,17 @@
 #include <stdio.h>
 #include "pgsm.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 int main(void) {
+
+#ifdef _WIN32
+    SetConsoleOutputCP(65001); // 设置输出编码为 UTF-8
+    SetConsoleCP(65001);       // 设置输入编码为 UTF-8
+#endif
+
+
     Player player = {
         .coins = 1000,
         .waters = 1000,
