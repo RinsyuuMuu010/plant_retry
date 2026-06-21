@@ -1,84 +1,109 @@
 //
-// Created by Akimei1223 on 2026/1/10.
+// 像素花园模拟器 - Pixel Garden Simulator
+// 头文件
 //
-
 #ifndef PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
 #define PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
-//include
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-//定价
-#define WP 1    // 每单位水的价格
-#define NP 5 // 每单位肥料的价格
-#define PeP 500 // 扩展1块地块的价格
-#define MPC 4 //地块上限为4
-#define SL "garden_save.dat"
 
-//植物类型
-typedef enum {
-    Carrot,
-    Potato,
-    Wheat,
-    Daisy,
-    None,
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
-}PlantType;
+// 经济数据（跨文件引用）
+extern const int g_price[];
+extern const char *g_cname[];
+#define WP  2   // 商店每单位水价格（金币）
+#define NP  5   // 商店每单位肥料价格（金币）
+#define WU  5   // 每次浇水消耗水资源
+#define NU  2   // 每次施肥消耗肥料
+#define WA  40  // 每次浇水增加土壤水分
+#define NA  40  // 每次施肥增加土壤养分
+#define MPC 4   // 地块数量上限
+#define SL  "garden_save.dat"
+#define SAVE_VERSION 1  // 存档版本号
 
-//植物Construct
+// 天气类型
+typedef enum { WEATHER_SUNNY, WEATHER_CLOUDY, WEATHER_RAINY } Weather;
+
+// 植物类型
+typedef enum { Carrot, Potato, Wheat, Daisy, None } PlantType;
+
+// 植物数据
 typedef struct {
-    char name[20];          // 植物名称
-    PlantType type;         // 植物类型
-    int growth_stage;       // 生长阶段（0-5，5为成熟）
-    int growth_value;       // 生长值（0-100，满则成熟）
-    int health;             // 健康值（0-100，0则枯萎）
-    int water_need;         // 每日需水量
-    int nutrient_need;      // 每日需养分量
-    int total_growth_days;  // 总生长天数
-    int sell_price;         // 出售价格
+    char name[12];
+    PlantType type;
+    int growth_stage;
+    int growth_value;       // 0-100
+    int health;             // 0-100
+    int water_need;
+    int nutrient_need;
+    int total_growth_days;
+    int sell_price;
 } Plant;
 
-// 地块内容
+// 地块
 typedef struct {
-    int is_empty;           // 是否空置（1=空，0=有植物）
-    Plant plant;            // 种植的植物
-    int planted_days;       // 已种植天数
-    int soil_water;         // 土壤水分
-    int soil_nutrient;      // 土壤养分
+    int is_empty;
+    Plant plant;
+    int planted_days;
+    int soil_water;
+    int soil_nutrient;
 } Plot;
 
-// 玩家资产
+// 玩家
 typedef struct {
-    int coins;              // 金币
-    int waters ;        // 水资源库存
-    int nutrients ;     // 养分库存（肥料）
-    int day;                // 游戏天数
-    int plot_count;         // 地块数量
+    int coins;
+    int waters;
+    int nutrients;
+    int day;
+    int plot_count;
+    Weather weather;
+    int seed_inventory[4];
 } Player;
-//初始化
-void initial_plant(Plant *plant,PlantType type);
-//种植
-int plant_seed(Player *player, Plot *plots, int plot_idx, PlantType plant_type);
-//浇水
-int water_plant(Player *player, Plot *plots, int plot_idx);
-//施肥
-int fer_plant(Player *player, Plot *plots, int plot_idx);
-//收获
-int harvest(Player *player,Plot *plots, int plot_idx);
-//主界面
-void show_detail(Player *player, Plot *plots);
-//计时
-void pushtime(Player *player,Plot *plots);
-//输入
-int get_plot(Player *player);
-//shop
-void shop_menu(Player *player);
-int buy_seed(Player *player,PlantType plant_type);
-int buy_water(Player *player, int amount);
-int buy_nutrient(Player *player,int amount);
-void shop(Player *player);//功能模块
-void save_game(Player *player, Plot *plots); //有bug
-int load_game(Player *player, Plot *plots);  //有bug？
-#endif //PGSM_PLANT_GARDEN_SIMULATION_MANAGEMENT__PGSM_H
+
+// 初始化
+void init_plant(Plant *p, PlantType t);
+void init_player(Player *p);
+
+// 核心操作
+int plant_seed (Player *pl, Plot *ps, int idx, PlantType t);
+int water_plant(Player *pl, Plot *ps, int idx);
+int fer_plant  (Player *pl, Plot *ps, int idx);
+int harvest    (Player *pl, Plot *ps, int idx);
+
+// 时间推进
+void pushtime(Player *pl, Plot *ps);
+
+// 商店
+void shop(Player *pl);
+
+// 存档
+int  save_game(Player *pl, Plot *ps);
+int  load_game(Player *pl, Plot *ps);
+
+// UI
+void show_main_ui(Player *pl, Plot *ps);
+int  get_plot(Player *pl);
+void flush_stdin(void);
+void get_time_str(char *buf, int sz);
+
+// 辅助
+const char *weather_name(Weather w);
+const char *weather_icon(Weather w);
+const char *stage_name(int s);
+const char *stage_icon(int s);
+const char *plant_cn_name(PlantType t);
+void show_easter_egg(void);
+void show_exit_summary(int start_coins, int end_coins, int days);
+
+#ifdef _WIN32
+void set_color(int fg, int bg);
+void reset_color(void);
+#endif
+
+#endif
