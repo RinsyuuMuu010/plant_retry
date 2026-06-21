@@ -26,6 +26,7 @@ extern const char *g_cname[];
 #define MPC 4   // 地块数量上限
 #define SL  "garden_save.dat"
 #define SAVE_VERSION 1  // 存档版本号
+#define LOG_MAX    5  // 操作日志条数
 
 // 天气类型
 typedef enum { WEATHER_SUNNY, WEATHER_CLOUDY, WEATHER_RAINY } Weather;
@@ -91,6 +92,10 @@ void show_main_ui(Player *pl, Plot *ps);
 int  get_plot(Player *pl);
 void flush_stdin(void);
 void get_time_str(char *buf, int sz);
+void clrscr(void);
+void log_add(const char *fmt, ...);
+void log_clear(void);
+const char* log_get(int i);
 
 // 辅助
 const char *weather_name(Weather w);

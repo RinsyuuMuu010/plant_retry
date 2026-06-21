@@ -2,6 +2,7 @@
 // 像素花园模拟器 - 核心逻辑实现
 //
 #include "pgsm.h"
+#include <stdarg.h>
 
 #ifdef _WIN32
 void set_color(int fg, int bg) {
@@ -11,6 +12,23 @@ void reset_color(void) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 }
 #endif
+
+// ─── 清屏 ─────────────────────────────────────────
+void clrscr(void) {
+#ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    COORD topLeft = {0, 0};
+    DWORD written;
+    GetConsoleScreenBufferInfo(hOut, &csbi);
+    DWORD size = (DWORD)(csbi.dwSize.X * csbi.dwSize.Y);
+    FillConsoleOutputCharacter(hOut, ' ', size, topLeft, &written);
+    FillConsoleOutputAttribute(hOut, csbi.wAttributes, size, topLeft, &written);
+    SetConsoleCursorPosition(hOut, topLeft);
+#else
+    printf("\033[2J\033[H");
+#endif
+}
 
 // ─── 经济数据 ─────────────────────────────────────
 // 种子价格表
@@ -23,6 +41,32 @@ void flush_stdin(void) {
     int c;
     if (feof(stdin)) return;
     while ((c = getchar()) != '\n' && c != EOF) {}
+}
+
+// ─── 操作日志 ─────────────────────────────────────
+static char  g_log[LOG_MAX][64];
+static int   g_log_cnt = 0;
+static int   g_log_idx = 0;
+
+void log_clear(void) {
+    g_log_cnt = 0; g_log_idx = 0;
+    memset(g_log, 0, sizeof(g_log));
+}
+
+void log_add(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(g_log[g_log_idx], sizeof(g_log[0]), fmt, args);
+    va_end(args);
+    if (g_log_cnt < LOG_MAX) g_log_cnt++;
+    g_log_idx = (g_log_idx + 1) % LOG_MAX;
+}
+
+// 获取第 i 条日志（0=最旧, g_log_cnt-1=最新）
+const char* log_get(int i) {
+    if (i < 0 || i >= g_log_cnt) return NULL;
+    int idx = (g_log_idx - g_log_cnt + i + LOG_MAX) % LOG_MAX;
+    return g_log[idx];
 }
 
 // ─── 本地时间 ─────────────────────────────────────
@@ -167,13 +211,13 @@ void init_player(Player *p) {
 // ─── 种植 ─────────────────────────────────────────
 int plant_seed(Player *pl, Plot *ps, int idx, PlantType t) {
     if (idx < 0 || idx >= pl->plot_count) {
-        printf("\t无效的地块！\n"); return 0;
+        log_add("无效的地块！"); return 0;
     }
     if (!ps[idx].is_empty) {
-        printf("\t已有植物，无法种植！\n"); return 0;
+        log_add("已有植物，无法种植！"); return 0;
     }
     if (t < Carrot || t > Daisy) {
-        printf("\t不存在的植物！\n"); return 0;
+        log_add("不存在的植物！"); return 0;
     }
 
     int price = g_price[t];
@@ -182,7 +226,7 @@ int plant_seed(Player *pl, Plot *ps, int idx, PlantType t) {
     } else if (pl->coins >= price) {
         pl->coins -= price;
     } else {
-        printf("\t金币不足！需%d金，当前%d金\n", price, pl->coins);
+        log_add("金币不足！需%d金，当前%d金", price, pl->coins);
         return 0;
     }
 
@@ -192,76 +236,76 @@ int plant_seed(Player *pl, Plot *ps, int idx, PlantType t) {
     ps[idx].soil_nutrient = 20;
     init_plant(&ps[idx].plant, t);
 
-    printf("\t种下%s！剩余金币:%d\n", ps[idx].plant.name, pl->coins);
+    log_add("种下%s！剩余金币:%d", ps[idx].plant.name, pl->coins);
     return 1;
 }
 
 // ─── 浇水 ─────────────────────────────────────────
 int water_plant(Player *pl, Plot *ps, int idx) {
     if (idx < 0 || idx >= pl->plot_count) {
-        printf("\t无效地块！\n"); return 0;
+        log_add("无效地块！"); return 0;
     }
     if (ps[idx].is_empty) {
-        printf("\t没有植物，无需浇水~\n"); return 0;
+        log_add("没有植物，无需浇水~"); return 0;
     }
     if (pl->waters < WU) {
-        printf("\t水资源不足！需%d，当前%d\n", WU, pl->waters);
+        log_add("水资源不足！需%d，当前%d", WU, pl->waters);
         return 0;
     }
     pl->waters -= WU;
     ps[idx].soil_water += WA;
     if (ps[idx].soil_water > 100) ps[idx].soil_water = 100;
 
-    printf("\t给%s浇水完成。水+%d，剩余水:%d\n",
-           ps[idx].plant.name, WA, pl->waters);
+    log_add("给%s浇水完成。水+%d，剩余水:%d",
+            ps[idx].plant.name, WA, pl->waters);
     return 1;
 }
 
 // ─── 施肥 ─────────────────────────────────────────
 int fer_plant(Player *pl, Plot *ps, int idx) {
     if (idx < 0 || idx >= pl->plot_count) {
-        printf("\t无效地块！\n"); return 0;
+        log_add("无效地块！"); return 0;
     }
     if (ps[idx].is_empty) {
-        printf("\t没有植物，无需施肥！\n"); return 0;
+        log_add("没有植物，无需施肥！"); return 0;
     }
     if (pl->nutrients < NU) {
-        printf("\t肥料不足！需%d，当前%d\n", NU, pl->nutrients);
+        log_add("肥料不足！需%d，当前%d", NU, pl->nutrients);
         return 0;
     }
     pl->nutrients -= NU;
     ps[idx].soil_nutrient += NA;
     if (ps[idx].soil_nutrient > 100) ps[idx].soil_nutrient = 100;
 
-    printf("\t给%s施肥完成。肥+%d，剩余肥:%d\n",
-           ps[idx].plant.name, NA, pl->nutrients);
+    log_add("给%s施肥完成。肥+%d，剩余肥:%d",
+            ps[idx].plant.name, NA, pl->nutrients);
     return 1;
 }
 
 // ─── 收获 ─────────────────────────────────────────
 int harvest(Player *pl, Plot *ps, int idx) {
     if (idx < 0 || idx >= pl->plot_count) {
-        printf("\t无效地块！\n"); return 0;
+        log_add("无效地块！"); return 0;
     }
     if (ps[idx].is_empty) {
-        printf("\t该地块没有植物！\n"); return 0;
+        log_add("该地块没有植物！"); return 0;
     }
 
     Plant *p = &ps[idx].plant;
     if (p->health <= 0) {
-        printf("\t%s已枯萎，铲除无收益。\n", p->name);
+        log_add("%s已枯萎，铲除无收益。", p->name);
         ps[idx].is_empty = 1;
         memset(p, 0, sizeof(Plant));
         return 0;
     }
     if (p->growth_value < 100 && p->growth_stage < 5) {
-        printf("\t%s未成熟(生长%d%%)，无法收获！\n", p->name, p->growth_value);
+        log_add("%s未成熟(生长%d%%)，无法收获！", p->name, p->growth_value);
         return 0;
     }
 
     pl->coins += p->sell_price;
-    printf("\t收获%s！获得%d金币，总计%d金币\n",
-           p->name, p->sell_price, pl->coins);
+    log_add("收获%s！+%d金币，总计%d金币",
+            p->name, p->sell_price, pl->coins);
 
     ps[idx].is_empty = 1;
     ps[idx].planted_days = 0;
@@ -280,8 +324,7 @@ void pushtime(Player *pl, Plot *ps) {
     else if (r < 80)  pl->weather = WEATHER_CLOUDY;
     else              pl->weather = WEATHER_RAINY;
 
-    printf("\n\t===== 第 %d 天 | %s%s =====\n",
-           pl->day, weather_icon(pl->weather), weather_name(pl->weather));
+    log_add("第%d天 | %s", pl->day, weather_name(pl->weather));
 
     for (int i = 0; i < pl->plot_count; i++) {
         if (ps[i].is_empty) continue;
@@ -314,22 +357,21 @@ void pushtime(Player *pl, Plot *ps) {
             if (p->growth_value > 100) p->growth_value = 100;
             p->growth_stage = p->growth_value / 20;
             if (p->growth_stage > 5) p->growth_stage = 5;
-            printf("\t地块%d: %s[%s] +%d (生长%d%%)\n",
-                   i, p->name, stage_name(p->growth_stage),
-                   bonus, p->growth_value);
+            log_add("地块%d:%s[%s] +%d(%d%%)",
+                    i, p->name, stage_name(p->growth_stage),
+                    bonus, p->growth_value);
         } else {
             p->health -= 15;
             if (p->health < 0) p->health = 0;
-            printf("\t地块%d: %s 资源不足，健康-%d (当前%d)\n",
-                   i, p->name, 15, p->health);
+            log_add("地块%d:%s 健康-%d(当前%d)",
+                    i, p->name, 15, p->health);
             if (p->health <= 0) {
-                printf("\t地块%d: %s 已枯萎...\n", i, p->name);
+                log_add("地块%d:%s 已枯萎...", i, p->name);
                 ps[i].is_empty = 1;
                 memset(p, 0, sizeof(Plant));
             }
         }
     }
-    printf("\t==============================\n");
 }
 
 // ─── 地块输入 ─────────────────────────────────────
@@ -369,39 +411,39 @@ static void shop_ui(Player *pl) {
 }
 
 static int shop_buy_seed(Player *pl, PlantType t) {
-    if (t < Carrot || t > Daisy) { printf("\t非法种子\n"); return 0; }
+    if (t < Carrot || t > Daisy) { log_add("非法种子"); return 0; }
     int price = g_price[t];
     if (pl->coins < price) {
-        printf("\t金币不足！需%d，当前%d\n", price, pl->coins); return 0;
+        log_add("金币不足！需%d，当前%d", price, pl->coins); return 0;
     }
     pl->coins -= price;
     pl->seed_inventory[t]++;
-    printf("\t买下%s种子，库存%d，余%d金\n",
-           g_cname[t], pl->seed_inventory[t], pl->coins);
+    log_add("买下%s种子，库存%d，余%d金",
+            g_cname[t], pl->seed_inventory[t], pl->coins);
     return 1;
 }
 
 static int shop_buy_water(Player *pl, int n) {
-    if (n <= 0) { printf("\t数量必须>0\n"); return 0; }
+    if (n <= 0) { log_add("数量必须>0"); return 0; }
     int cost = n * WP;
     if (pl->coins < cost) {
-        printf("\t金币不足！需%d，当前%d\n", cost, pl->coins); return 0;
+        log_add("金币不足！需%d，当前%d", cost, pl->coins); return 0;
     }
     pl->coins  -= cost;
     pl->waters += n;
-    printf("\t购买%d水，余水%d，余金%d\n", n, pl->waters, pl->coins);
+    log_add("购买%d水，余水%d，余%d金", n, pl->waters, pl->coins);
     return 1;
 }
 
 static int shop_buy_fert(Player *pl, int n) {
-    if (n <= 0) { printf("\t数量必须>0\n"); return 0; }
+    if (n <= 0) { log_add("数量必须>0"); return 0; }
     int cost = n * NP;
     if (pl->coins < cost) {
-        printf("\t金币不足！需%d，当前%d\n", cost, pl->coins); return 0;
+        log_add("金币不足！需%d，当前%d", cost, pl->coins); return 0;
     }
     pl->coins     -= cost;
     pl->nutrients += n;
-    printf("\t购买%d肥，余肥%d，余金%d\n", n, pl->nutrients, pl->coins);
+    log_add("购买%d肥，余肥%d，余%d金", n, pl->nutrients, pl->coins);
     return 1;
 }
 
@@ -430,7 +472,7 @@ void shop(Player *pl) {
                 break;
             }
             case 7: return;
-            default: printf("\t无效选项\n");
+            default: log_add("无效选项");
         }
         printf("\t按回车继续...\n"); flush_stdin();
     }
@@ -489,116 +531,147 @@ void show_main_ui(Player *pl, Plot *ps) {
         printf("%s%d ", g_cname[i], pl->seed_inventory[i]);
     printf(" |\n");
 
-    // ─── 地块区 ───
+    // ─── 地块区（2列宽盒，25列内容区）───
     printf(" +");  for (int i = 0; i < GW - 2; i++) printf("-");  printf("+\n");
     printf(" |");
     { int pad = (GW - 2 - 15) / 2; for (int i = 0; i < pad; i++) printf(" "); }
     printf("~~~ 花园一览 ~~~");
-    { int pad = GW - 2 - 15 - (GW - 2 - 15) / 2; for (int i = 0; i < pad - 15; i++) printf(" "); }
+    { int pad = GW - 2 - 15 - (GW - 2 - 15) / 2;
+      for (int i = 0; i < pad; i++) printf(" "); }
     printf("|\n");
 
-    // 标签行
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++)
-        printf("   地块[%d]      ", i);
-    printf(" |\n");
-
-    // 地块盒子 - 顶框
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++)
-        printf("+-----------+ ");
-    printf("|\n");
-
-    // 行1: 名称
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++) {
-        printf("|");
-        if (ps[i].is_empty) printf("    (空)   ");
-        else printf(" %-9s", ps[i].plant.name);
-        printf("| ");
-    }
-    printf("|\n");
-
-    // 行2: 阶段
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++) {
-        printf("|");
-        if (ps[i].is_empty) {
-            printf("           ");
-        } else {
-            int st = ps[i].plant.growth_stage;
-#ifdef _WIN32
-            if (st >= 5) set_color(10, 0);
-            else if (ps[i].plant.health < 30) set_color(12, 0);
-            else set_color(14, 0);
-#endif
-            printf("  %s %-4s", stage_icon(st), stage_name(st));
-#ifdef _WIN32
-            reset_color();
-#endif
-            printf(" ");
+    for (int row = 0; row < 2; row++) {
+        // 地块标签
+        printf(" |  ");
+        for (int col = 0; col < 2; col++) {
+            int idx = row * 2 + col;
+            if (idx < pl->plot_count)
+                printf("地块[%d]                       ", idx);
         }
-        printf("| ");
-    }
-    printf("|\n");
+        printf("|\n");
 
-    // 行3: 成长条
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++) {
-        printf("|");
-        if (ps[i].is_empty) printf("           ");
-        else {
-            int b = ps[i].plant.growth_value / 10;
-            printf("成长 [");
-            for (int j = 0; j < 10; j++) printf("%c", j < b ? '#' : '-');
-            printf("]");
-        }
-        printf("| ");
-    }
-    printf("|\n");
+        // 盒子顶框
+        printf(" |  ");
+        for (int col = 0; col < 2; col++)
+            if (row * 2 + col < pl->plot_count)
+                printf("+-------------------------+ ");
+        printf("|\n");
 
-    // 行4: 生命条
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++) {
-        printf("|");
-        if (ps[i].is_empty) printf("           ");
-        else {
-            int b = ps[i].plant.health / 10;
-            printf("生命 [");
-            for (int j = 0; j < 10; j++) {
-                if (j < b) {
-#ifdef _WIN32
-                    if (b <= 3) set_color(12, 0);
-                    else if (b <= 5) set_color(14, 0);
-                    else set_color(10, 0);
-#endif
-                    printf("#");
-#ifdef _WIN32
-                    reset_color();
-#endif
-                } else printf("-");
+        // 内容行1: 名称 (name=4显示列, 20空格补齐→25)
+        printf(" |  ");
+        for (int col = 0; col < 2; col++) {
+            int idx = row * 2 + col;
+            if (idx >= pl->plot_count) continue;
+            printf("|");
+            if (ps[idx].is_empty)
+                printf("         (空地)          ");
+            else {
+                printf(" %s", ps[idx].plant.name);
+                for (int s = 0; s < 20; s++) printf(" ");
             }
-            printf("]");
+            printf("| ");
         }
-        printf("| ");
-    }
-    printf("|\n");
+        printf("|\n");
 
-    // 行5: 水/肥
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++) {
-        printf("|");
-        if (ps[i].is_empty) printf("           ");
-        else printf(" 水%-2d 肥%-2d", ps[i].soil_water, ps[i].soil_nutrient);
-        printf("| ");
-    }
-    printf("|\n");
+        // 内容行2: 阶段+成长 (21+4空格=25)
+        printf(" |  ");
+        for (int col = 0; col < 2; col++) {
+            int idx = row * 2 + col;
+            if (idx >= pl->plot_count) continue;
+            printf("|");
+            if (ps[idx].is_empty) {
+                printf("                         ");
+            } else {
+                Plant *p = &ps[idx].plant;
+                int st = p->growth_stage;
+                int bg = p->growth_value * 8 / 100;
+#ifdef _WIN32
+                if (st >= 5) set_color(10, 0);
+                else if (p->health < 30) set_color(12, 0);
+                else set_color(14, 0);
+#endif
+                printf(" %s%s", stage_icon(st), stage_name(st));
+#ifdef _WIN32
+                reset_color();
+#endif
+                printf("  %s[", "成长");
+                for (int j = 0; j < 8; j++) printf("%c", j < bg ? '#' : '-');
+                printf("]    ");
+            }
+            printf("| ");
+        }
+        printf("|\n");
 
-    // 底框
-    printf(" |  ");
-    for (int i = 0; i < pl->plot_count; i++)
-        printf("+-----------+ ");
-    printf("|\n");
+        // 内容行3: 生命 (15+10空格=25)
+        printf(" |  ");
+        for (int col = 0; col < 2; col++) {
+            int idx = row * 2 + col;
+            if (idx >= pl->plot_count) continue;
+            printf("|");
+            if (ps[idx].is_empty) {
+                printf("                         ");
+            } else {
+                int bh = ps[idx].plant.health * 8 / 100;
+                printf(" %s[", "生命");
+                for (int j = 0; j < 8; j++) {
+                    if (j < bh) {
+#ifdef _WIN32
+                        if (bh <= 2) set_color(12, 0);
+                        else if (bh <= 4) set_color(14, 0);
+                        else set_color(10, 0);
+#endif
+                        printf("#");
+#ifdef _WIN32
+                        reset_color();
+#endif
+                    } else printf("-");
+                }
+                printf("]");
+                for (int s = 0; s < 10; s++) printf(" ");
+            }
+            printf("| ");
+        }
+        printf("|\n");
+
+        // 内容行4: 水/肥 (最宽14+11空格=25)
+        printf(" |  ");
+        for (int col = 0; col < 2; col++) {
+            int idx = row * 2 + col;
+            if (idx >= pl->plot_count) continue;
+            printf("|");
+            if (ps[idx].is_empty) {
+                printf("                         ");
+            } else {
+                int w = ps[idx].soil_water;
+                int f = ps[idx].soil_nutrient;
+                printf(" 水%3d  肥%3d", w, f);
+                for (int s = 0; s < 11; s++) printf(" ");
+            }
+            printf("| ");
+        }
+        printf("|\n");
+
+        // 盒子底框
+        printf(" |  ");
+        for (int col = 0; col < 2; col++)
+            if (row * 2 + col < pl->plot_count)
+                printf("+-------------------------+ ");
+        printf("|\n");
+    }
+
+    // ─── 操作日志 ───
+    printf(" +");  for (int i = 0; i < GW - 2; i++) printf("-");  printf("+\n");
+    printf(" | [操作日志]                                              |\n");
+    for (int i = 0; i < LOG_MAX; i++) {
+        const char *msg = log_get(i);
+        printf(" | ");
+        if (msg && msg[0]) {
+            printf("> %-54s", msg);
+        } else {
+            printf("                                                        ");
+        }
+        printf("|\n");
+    }
 
     // ─── 菜单 ───
     printf(" +");  for (int i = 0; i < GW - 2; i++) printf("-");  printf("+\n");
@@ -612,34 +685,34 @@ void show_main_ui(Player *pl, Plot *ps) {
 // ─── 存档/读档 ────────────────────────────────────
 int save_game(Player *pl, Plot *ps) {
     FILE *fp = fopen(SL, "wb");
-    if (!fp) { printf("\t存档失败！\n"); return 0; }
+    if (!fp) { log_add("存档失败！"); return 0; }
     int ver = SAVE_VERSION;
     fwrite(&ver,  sizeof(int),  1, fp);
     fwrite(pl,   sizeof(Player), 1, fp);
     fwrite(ps,   sizeof(Plot),   pl->plot_count, fp);
     fclose(fp);
-    printf("\t保存成功！\n");
+    log_add("游戏保存成功！");
     return 1;
 }
 
 int load_game(Player *pl, Plot *ps) {
     FILE *fp = fopen(SL, "rb");
-    if (!fp) { printf("\t无存档文件\n"); return 0; }
+    if (!fp) { log_add("无存档文件"); return 0; }
 
     int ver;
     if (fread(&ver, sizeof(int), 1, fp) != 1 || ver != SAVE_VERSION) {
         fclose(fp);
-        printf("\t存档版本不兼容\n"); return 0;
+        log_add("存档版本不兼容"); return 0;
     }
     if (fread(pl, sizeof(Player), 1, fp) != 1) {
         fclose(fp);
-        printf("\t玩家数据损坏\n"); return 0;
+        log_add("玩家数据损坏"); return 0;
     }
     if (fread(ps, sizeof(Plot), pl->plot_count, fp) != (size_t)pl->plot_count) {
         fclose(fp);
-        printf("\t地块数据损坏\n"); return 0;
+        log_add("地块数据损坏"); return 0;
     }
     fclose(fp);
-    printf("\t加载成功！\n");
+    log_add("游戏加载成功！");
     return 1;
 }

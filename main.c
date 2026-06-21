@@ -27,10 +27,11 @@ int main(void) {
 
     int choice;
     while (1) {
+        clrscr();
         show_main_ui(&player, plots);
         if (scanf("%d", &choice) != 1) {
             if (feof(stdin)) break;
-            printf("\t输入无效\n");
+            log_add("输入无效，请输数字");
             flush_stdin(); continue;
         }
         flush_stdin();
@@ -48,7 +49,7 @@ int main(void) {
                 int t;
                 if (scanf("%d", &t) != 1 || t < 1 || t > 4) {
                     flush_stdin();
-                    printf("\t无效选择\n"); break;
+                    log_add("无效选择"); break;
                 }
                 flush_stdin();
                 plant_seed(&player, plots, idx, (PlantType)(t - 1));
@@ -60,18 +61,18 @@ int main(void) {
             case 5: pushtime   (&player, plots);                     break;
             case 6: save_game  (&player, plots);                     break;
             case 7:
-                if (!load_game(&player, plots))
-                    printf("\t加载失败\n");
+                load_game(&player, plots);
                 break;
             case 8: shop(&player);                                   break;
             case 9:
+                clrscr();
                 show_exit_summary(start_coins, player.coins, player.day);
                 return 0;
             default:
-                printf("\t无效选项(1-9)\n");
+                log_add("无效选项(1-9)");
         }
         if (feof(stdin)) break;
-        printf("\t按回车继续...\n");
+        printf("\n\t按回车继续...\n");
         flush_stdin();
     }
     return 0;
