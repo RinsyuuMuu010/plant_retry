@@ -1,3 +1,31 @@
+# ---- 构建产物 ----
+build/
+cmake-build-*/
+cmake-build*/
+CMakeFiles/
+CMakeCache.txt
+Makefile.bak
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.d
+
+# ---- 游戏存档（本地生成，不提交）----
+garden_save.dat
+garden_save.dat.tmp
+
+# ---- IDE ----
+.idea/workspace.xml
+.idea/shelf/
+.vs/
+.vscode/
+
+# ---- 系统垃圾 ----
+Thumbs.db
+.DS_Store
+
 # Build and Release Folders
 bin-debug/
 bin-release/
@@ -25,7 +53,3 @@ bld/
 *.air
 *.ipa
 *.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.

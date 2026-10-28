@@ -1,99 +1,102 @@
+/*
+ * main.c —— 入口与主循环
+ *
+ * 这一层只做“把用户的操作翻译成一次函数调用”，
+ * 规则在 pgsm.c，排版在 ui.c，持久化在 save.c。
+ */
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "pgsm.h"
+#include "ui.h"
 
-int main(void) {
-    Player player = {
-        .coins = 1000,
-        .waters = 1000,
-        .nutrients = 1000,
-        .day = 1,
-        .plot_count = MPC,
-    };
-    Plot plots[4];
+/* 询问地块编号：返回 1 = 选好，0 = 输入结束，-1 = 用户取消 */
+static int ask_plot(const Player *player, int *out)
+{
+    char prompt[80];
+    int v = 0;
 
-    for (int i=0;i< player.plot_count;i++) {
-        plots[i].is_empty = 1;
-        memset(&plots[i].plant,0,sizeof(Plant));
-        plots[i].planted_days = 0;
-        plots[i].soil_water = 0;
-        plots[i].soil_nutrient = 0;
-    }
+    snprintf(prompt, sizeof prompt, "第几号地块（1-%d，0 取消）", player->plot_count);
+    if (!ui_prompt(prompt, 0, player->plot_count, &v)) return 0;
+    if (v == 0) return -1;
 
-    //啥都没写
-    int choice;
-    while (1) {
-        show_detail(&player,plots);
-        while (scanf("%d",&choice) != 1) {
-            printf("\t输入无效，请输入数字：");
-            while (getchar()!='\n');
+    *out = v - 1;
+    return 1;
+}
+
+int main(void)
+{
+    Player player;
+    Plot plots[MAX_PLOTS];
+    int running = 1;
+
+    srand((unsigned)time(NULL));
+    ui_init();
+    game_new(&player, plots);
+
+    ui_title();
+    ui_note("输入数字后回车。1-5 打理花园，6 商店，7 下一天，8/9 存读档，0 退出。");
+    ui_pause();
+
+    while (running) {
+        int choice = 0;
+
+        ui_screen(&player, plots);
+        if (!ui_prompt("选择操作", 0, 9, &choice)) {
+            printf("\n");
+            break;
         }
-        while (getchar()!='\n');
+        if (choice == 0) break;
+
+        if (choice >= 1 && choice <= 5) {
+            int idx = 0;
+            int rc = ask_plot(&player, &idx);
+
+            if (rc == 0) break;        /* 输入流结束，直接收工 */
+            if (rc < 0) continue;      /* 取消了，回主菜单 */
+
+            if (choice == 1) {
+                int type = 0;
+                ui_seed_screen(&player, 0);
+                if (!ui_prompt("种哪种（0 取消）", 0, PLANT_COUNT, &type)) break;
+                if (type > 0) plant_seed(&player, plots, idx, (PlantType)(type - 1));
+            } else if (choice == 2) {
+                water_plant(&player, plots, idx);
+            } else if (choice == 3) {
+                fertilize_plant(&player, plots, idx);
+            } else if (choice == 4) {
+                cure_pest(&player, plots, idx);
+            } else {
+                harvest_plant(&player, plots, idx);
+            }
+
+            ui_pause();
+            continue;
+        }
+
         switch (choice) {
-            case 1: {
-                int plot_idx = get_plot(&player);
-                printf("\n\t==========选择植物==========\n\t");
-                printf("-->1.萝卜 <------> 2.土豆<--\n\t");
-                printf("-->3.小麦 <------> 4.雏菊<--\n\t");
-                printf("==========选择植物==========\n\t");
-                printf("请选择操作（输入数字键）：");
-                int plant_choice;
-                while (scanf("%d",&plant_choice) !=1 ||plant_choice <1 ||plant_choice >4 ) {
-                    printf("\t无效选择！请输入1-4：");
-                    while (getchar() != '\n');
-                }
-                plant_seed(&player,plots,plot_idx,plant_choice-1);
+            case 6:
+                shop(&player, plots);
                 break;
-            }
-            case 2: {
-                int plot_idx = get_plot(&player);
-                water_plant(&player,plots,plot_idx);   //浇水
+            case 7:
+                advance_day(&player, plots);
+                ui_pause();
                 break;
-            }
-            case 3: {
-                int plot_idx = get_plot(&player);
-                fer_plant(&player,plots,plot_idx);  //施肥
+            case 8:
+                save_game(&player, plots);
+                ui_pause();
                 break;
-            }
-            case 4: {
-                int plot_idx = get_plot(&player);
-                harvest(&player,plots,plot_idx); //收获
+            case 9:
+                load_game(&player, plots);
+                ui_pause();
                 break;
-            }
-            case 5: {
-                pushtime(&player,plots);
-                break;
-            }
-            case 6: {
-                save_game(&player,plots);
-                break;
-            }
-            case 7: {
-                if (load_game(&player,plots)) {
-                    printf("\t加载成功!\n");
-                }else{
-                    printf("\t加载失败!\n");
-                }
-                break;
-            }
-            case 8: { // 商店
-                shop(&player);
-                break;
-            }
-            case 9: { // 退出游戏
-                printf("\t感谢游玩！再见～\n");
-                return 0;
-            }
             default:
-                printf("\t选择无效，请选择1-9之间的数字！\n");
                 break;
         }
-        printf("\tPress any key to continue...\n");
-        while (getchar() != '\n' && getchar() != EOF);
-        getchar();//防止直接进入
-                //写一坨不知道有啥用
-        //中文显示有bug
-        //?
-
-        }
-        return 0;
     }
+
+    printf("\n  再见，记得给花浇水。\n\n");
+    return 0;
+}
